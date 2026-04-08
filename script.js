@@ -3,6 +3,8 @@ const button = document.getElementById("searchBtn");
 const result = document.getElementById("result");
 const loader = document.getElementById("loader");
 
+let allTeamsData = [];
+
 button.addEventListener("click", () => {
   const teamName = input.value.trim();
 
@@ -12,6 +14,16 @@ button.addEventListener("click", () => {
   }
 
   fetchTeam(teamName);
+});
+
+input.addEventListener("input", () => {
+  const searchTerm = input.value.trim().toLowerCase();
+  if (allTeamsData && allTeamsData.length > 0) {
+    const filteredTeams = allTeamsData.filter(team => 
+      team.strTeam.toLowerCase().includes(searchTerm)
+    );
+    displayTeams(filteredTeams);
+  }
 });
 
 async function fetchTeam(team) {
@@ -28,27 +40,47 @@ async function fetchTeam(team) {
     loader.style.display = "none";
 
     if (!data.teams) {
-      result.innerHTML = "No team found";
+      allTeamsData = [];
+      result.innerHTML = "<p class='error-msg'>No teams found. Please try another search.</p>";
       return;
     }
 
-    displayTeam(data.teams[0]);
+    allTeamsData = data.teams;
+    displayTeams(allTeamsData);
   } catch (error) {
     loader.style.display = "none";
-    result.innerHTML = "Error fetching data";
+    allTeamsData = [];
+    result.innerHTML = "<p class='error-msg'>Error fetching data. Please try again later.</p>";
     console.error(error);
   }
 }
 
-function displayTeam(team) {
-  result.innerHTML = `
-    <h2>${team.strTeam}</h2>
-    <img src="${team.strTeamBadge}" 
-     alt="Team Logo" 
-     width="150"
-     onerror="this.src='https://via.placeholder.com/150?text=No+Logo'" />   
-    <p><strong>League:</strong> ${team.strLeague}</p>
-    <p><strong>Country:</strong> ${team.strCountry}</p>
-    <p><strong>Stadium:</strong> ${team.strStadium}</p>
-    <p>${team.strDescriptionEN || "No description available"}</p>  `;
+function displayTeams(teams) {
+  result.innerHTML = `<div class="teams-grid">` + 
+    teams.map(team => `
+      <div class="team-card">
+        <div class="card-glass-panel">
+          <div class="logo-wrapper">
+            <img src="${team.strTeamBadge || `https://ui-avatars.com/api/?name=${encodeURIComponent(team.strTeam)}&background=141c2f&color=00ffcc&size=150`}" 
+             alt="${team.strTeam} Logo" 
+             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(team.strTeam)}&background=141c2f&color=00ffcc&size=150';" />
+          </div>
+          <div class="card-content">
+            <h2>${team.strTeam}</h2>
+            <div class="info-row">
+              <span class="info-label">League</span>
+              <span class="info-value">${team.strLeague}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Country</span>
+              <span class="info-value">${team.strCountry}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Stadium</span>
+              <span class="info-value">${team.strStadium || 'Unknown'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('') + `</div>`;
 }
