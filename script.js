@@ -5,6 +5,7 @@ const button = document.getElementById("searchBtn");
 const result = document.getElementById("result");
 const loader = document.getElementById("loader");
 const favoritesContainer = document.getElementById("favoritesContainer");
+const themeToggle = document.getElementById("themeToggle");
 
 let allTeamsData = [];
 let favorites = JSON.parse(localStorage.getItem('futbolFavorites')) || [];
@@ -173,6 +174,22 @@ function displayTeams(teams) {
   result.innerHTML = `<div class="teams-grid">` + 
     teams.map(team => createTeamCardHTML(team)).join('') + `</div>`;
 }
+
+// Theme Toggle Logic
+let isLightMode = localStorage.getItem('futbolTheme') === 'light';
+
+if (isLightMode) {
+  document.body.classList.add("light-theme");
+  themeToggle.textContent = '🌙';
+}
+
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("light-theme");
+  isLightMode = document.body.classList.contains("light-theme");
+  
+  themeToggle.textContent = isLightMode ? '🌙' : '☀️';
+  localStorage.setItem('futbolTheme', isLightMode ? 'light' : 'dark');
+});
 
 // Initial render of favorites
 renderFavorites();
