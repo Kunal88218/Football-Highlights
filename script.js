@@ -1,9 +1,43 @@
 const input = document.getElementById("teamInput");
+const leagueFilter = document.getElementById("leagueFilter");
 const button = document.getElementById("searchBtn");
 const result = document.getElementById("result");
 const loader = document.getElementById("loader");
 
 let allTeamsData = [];
+
+function applyFilters() {
+  const searchTerm = input.value.trim().toLowerCase();
+  const selectedLeague = leagueFilter.value;
+  
+  if (allTeamsData && allTeamsData.length > 0) {
+    const filteredTeams = allTeamsData.filter(team => {
+      const matchesSearch = team.strTeam.toLowerCase().includes(searchTerm);
+      const matchesLeague = selectedLeague === "" || team.strLeague === selectedLeague;
+      return matchesSearch && matchesLeague;
+    });
+    displayTeams(filteredTeams);
+  }
+}
+
+function updateLeagueDropdown(teams) {
+  const currentSelection = leagueFilter.value;
+  const leagues = new Set(teams.map(team => team.strLeague).filter(Boolean));
+  
+  leagueFilter.innerHTML = '<option value="">All Leagues</option>';
+  
+  Array.from(leagues).sort().forEach(league => {
+    const option = document.createElement("option");
+    option.value = league;
+    option.textContent = league;
+    leagueFilter.appendChild(option);
+  });
+  
+  // Restore selection if it still exists
+  if (leagues.has(currentSelection)) {
+    leagueFilter.value = currentSelection;
+  }
+}
 
 button.addEventListener("click", () => {
   const teamName = input.value.trim();
@@ -16,15 +50,8 @@ button.addEventListener("click", () => {
   fetchTeam(teamName);
 });
 
-input.addEventListener("input", () => {
-  const searchTerm = input.value.trim().toLowerCase();
-  if (allTeamsData && allTeamsData.length > 0) {
-    const filteredTeams = allTeamsData.filter(team => 
-      team.strTeam.toLowerCase().includes(searchTerm)
-    );
-    displayTeams(filteredTeams);
-  }
-});
+input.addEventListener("input", applyFilters);
+leagueFilter.addEventListener("change", applyFilters);
 
 async function fetchTeam(team) {
   loader.style.display = "block";
@@ -41,15 +68,18 @@ async function fetchTeam(team) {
 
     if (!data.teams) {
       allTeamsData = [];
+      updateLeagueDropdown([]);
       result.innerHTML = "<p class='error-msg'>No teams found. Please try another search.</p>";
       return;
     }
 
     allTeamsData = data.teams;
-    displayTeams(allTeamsData);
+    updateLeagueDropdown(allTeamsData);
+    applyFilters();
   } catch (error) {
     loader.style.display = "none";
     allTeamsData = [];
+    updateLeagueDropdown([]);
     result.innerHTML = "<p class='error-msg'>Error fetching data. Please try again later.</p>";
     console.error(error);
   }

@@ -13,8 +13,13 @@
 
   <h1>⚽ Team Search</h1>
 
-  <input type="text" id="teamInput" placeholder="Enter team name" />
-  <button id="searchBtn">Search</button>
+  <div class="search-container">
+    <input type="text" id="teamInput" placeholder="Enter team name" />
+    <select id="leagueFilter">
+      <option value="">All Leagues</option>
+    </select>
+    <button id="searchBtn">Search</button>
+  </div>
 
   <p id="loader" style="display: none;">Loading...</p>
 
