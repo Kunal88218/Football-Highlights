@@ -4,8 +4,41 @@ const sortOption = document.getElementById("sortOption");
 const button = document.getElementById("searchBtn");
 const result = document.getElementById("result");
 const loader = document.getElementById("loader");
+const favoritesContainer = document.getElementById("favoritesContainer");
 
 let allTeamsData = [];
+let favorites = JSON.parse(localStorage.getItem('futbolFavorites')) || [];
+
+function toggleFavorite(teamId) {
+  const index = favorites.findIndex(t => t.idTeam === teamId);
+  if (index !== -1) {
+    favorites.splice(index, 1);
+  } else {
+    // Find team in allTeamsData
+    const teamObj = allTeamsData.find(t => t.idTeam === teamId) || favorites.find(t => t.idTeam === teamId);
+    if (teamObj) {
+      favorites.push(teamObj);
+    }
+  }
+  localStorage.setItem('futbolFavorites', JSON.stringify(favorites));
+  renderFavorites();
+  applyFilters(); // Re-render search results to update stars
+}
+
+function renderFavorites() {
+  if (favorites.length === 0) {
+    favoritesContainer.innerHTML = "";
+    return;
+  }
+  
+  favoritesContainer.innerHTML = `
+    <h2 class="section-title">⭐ Your Favorites</h2>
+    <div class="teams-grid">
+      ${favorites.map(team => createTeamCardHTML(team)).join('')}
+    </div>
+    <hr class="divider" />
+  `;
+}
 
 function applyFilters() {
   const searchTerm = input.value.trim().toLowerCase();
@@ -99,32 +132,47 @@ async function fetchTeam(team) {
   }
 }
 
-function displayTeams(teams) {
-  result.innerHTML = `<div class="teams-grid">` + 
-    teams.map(team => `
-      <div class="team-card">
-        <div class="card-glass-panel">
-          <div class="logo-wrapper">
-            <img src="${team.strTeamBadge || `https://ui-avatars.com/api/?name=${encodeURIComponent(team.strTeam)}&background=141c2f&color=00ffcc&size=150`}" 
-             alt="${team.strTeam} Logo" 
-             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(team.strTeam)}&background=141c2f&color=00ffcc&size=150';" />
+function createTeamCardHTML(team) {
+  const isFav = favorites.some(f => f.idTeam === team.idTeam);
+  return `
+    <div class="team-card">
+      <div class="card-glass-panel">
+        <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${team.idTeam}')">
+          ${isFav ? '★' : '☆'}
+        </button>
+        <div class="logo-wrapper">
+          <img src="${team.strTeamBadge || `https://ui-avatars.com/api/?name=${encodeURIComponent(team.strTeam)}&background=141c2f&color=00ffcc&size=150`}" 
+           alt="${team.strTeam} Logo" 
+           onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(team.strTeam)}&background=141c2f&color=00ffcc&size=150';" />
+        </div>
+        <div class="card-content">
+          <h2>${team.strTeam}</h2>
+          <div class="info-row">
+            <span class="info-label">League</span>
+            <span class="info-value">${team.strLeague}</span>
           </div>
-          <div class="card-content">
-            <h2>${team.strTeam}</h2>
-            <div class="info-row">
-              <span class="info-label">League</span>
-              <span class="info-value">${team.strLeague}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Country</span>
-              <span class="info-value">${team.strCountry}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Stadium</span>
-              <span class="info-value">${team.strStadium || 'Unknown'}</span>
-            </div>
+          <div class="info-row">
+            <span class="info-label">Country</span>
+            <span class="info-value">${team.strCountry}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Stadium</span>
+            <span class="info-value">${team.strStadium || 'Unknown'}</span>
           </div>
         </div>
       </div>
-    `).join('') + `</div>`;
+    </div>
+  `;
 }
+
+function displayTeams(teams) {
+  if (teams.length === 0) {
+    result.innerHTML = "<p class='error-msg'>No teams match your filters.</p>";
+    return;
+  }
+  result.innerHTML = `<div class="teams-grid">` + 
+    teams.map(team => createTeamCardHTML(team)).join('') + `</div>`;
+}
+
+// Initial render of favorites
+renderFavorites();
