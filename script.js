@@ -1,5 +1,6 @@
 const input = document.getElementById("teamInput");
 const leagueFilter = document.getElementById("leagueFilter");
+const sortOption = document.getElementById("sortOption");
 const button = document.getElementById("searchBtn");
 const result = document.getElementById("result");
 const loader = document.getElementById("loader");
@@ -9,13 +10,25 @@ let allTeamsData = [];
 function applyFilters() {
   const searchTerm = input.value.trim().toLowerCase();
   const selectedLeague = leagueFilter.value;
+  const sortBy = sortOption.value;
   
   if (allTeamsData && allTeamsData.length > 0) {
-    const filteredTeams = allTeamsData.filter(team => {
+    let filteredTeams = allTeamsData.filter(team => {
       const matchesSearch = team.strTeam.toLowerCase().includes(searchTerm);
       const matchesLeague = selectedLeague === "" || team.strLeague === selectedLeague;
       return matchesSearch && matchesLeague;
     });
+
+    if (sortBy === "nameAsc") {
+      filteredTeams.sort((a, b) => (a.strTeam || "").localeCompare(b.strTeam || ""));
+    } else if (sortBy === "nameDesc") {
+      filteredTeams.sort((a, b) => (b.strTeam || "").localeCompare(a.strTeam || ""));
+    } else if (sortBy === "countryAsc") {
+      filteredTeams.sort((a, b) => (a.strCountry || "").localeCompare(b.strCountry || ""));
+    } else if (sortBy === "countryDesc") {
+      filteredTeams.sort((a, b) => (b.strCountry || "").localeCompare(a.strCountry || ""));
+    }
+
     displayTeams(filteredTeams);
   }
 }
@@ -52,6 +65,7 @@ button.addEventListener("click", () => {
 
 input.addEventListener("input", applyFilters);
 leagueFilter.addEventListener("change", applyFilters);
+sortOption.addEventListener("change", applyFilters);
 
 async function fetchTeam(team) {
   loader.style.display = "block";
